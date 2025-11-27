@@ -1,0 +1,37 @@
+name: Daily Astro Tweet
+
+on:
+  schedule:
+    # UTC Saatine göre ayarlanır. Türkiye (UTC+3) için sabah 09:00 olması için 06:00 yazıyoruz.
+    # Her gün saat 06:00 UTC'de çalışır.
+    - cron: '0 6 * * *'
+  
+  # Manuel olarak butona basıp tetiklemek istersen bunu ekle:
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodları Çek (Checkout)
+        uses: actions/checkout@v3
+
+      - name: Python Kurulumu
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Kütüphaneleri Yükle
+        run: |
+          pip install -r requirements.txt
+
+      - name: Botu Çalıştır
+        env:
+          # GitHub Secret'ları kodun anlayacağı değişkenlere bağlıyoruz
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
+          X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: python main.py
