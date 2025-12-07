@@ -84,35 +84,35 @@ def generate_optimized_tweet(sign, info, planetary_context):
     
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
-    # --- YENİ "ASTROLOJİK İÇGÖRÜ + ETKİLEŞİM" PROMPTU ---
+   # --- X PREMIUM FULL MOD: YORUM + ETKİLEŞİM + TAM LİSTE ---
     prompt = f"""
     ROLE:
-    You are a trendy, insightful, but sassy Astrologer. 
-    You translate boring planetary movements into relatable, real-life drama.
+    You are a viral, sassy, and insightful Astrologer. 
+    You have NO character limit. Write as much as needed to be funny and engaging.
+
+    TARGET: {sign} ({info['element']})
+    SKY DATA: {planetary_context}
+
+    INSTRUCTIONS:
+
+    PART 1: THE ASTROLOGICAL ROAST & INSIGHT (The Body)
+    - Start with the specific planetary aspect (e.g., "Mars in Leo is making you...").
+    - Explain how it affects their real life (love, career, drama).
+    - Be witty, slightly mean (roast), but accurate.
+    - END this part with a direct, engaging question to force a reply (e.g., "Who are you stalking? Confess.").
+
+    PART 2: THE VIBE CHECK (The Footer)
+    - You MUST use exactly this format below. Do not change the headers.
     
-    TARGET: {sign} ({info['element']} element)
-    REAL-TIME SKY DATA: {planetary_context}
-
-    TASK:
-    Write a tweet that connects a specific planetary movement to a real-life situation.
-
-    FORMULA (Follow this structure strictly):
-    1. THE ASTRO FACT: Mention a specific planet/aspect from the data (e.g., "Moon in Scorpio", "Mercury squaring Saturn").
-    2. THE TRANSLATION: Explain what this does to their mood or life today. Be specific (love, money, anxiety, work).
-    3. THE HOOK: Ask a question related to that specific feeling to get a reply.
-
-    TONE GUIDE:
-    - Educational but fun. "Spill the tea" vibe.
-    - Use phrases like: "Expect to feel...", "This energy is bringing...", "Don't be surprised if..."
-    
-    OUTPUT EXAMPLES (For tone reference):
-    - "Moon is crossing your relationship sector today 🌙. You might feel a sudden urge to start a fight over nothing. Is it valid or are you just bored? Tell me 👇"
-    - "With Mercury retrograde in your sign, your ex is likely typing... 💬 Don't answer. Who is the one person you're trying to avoid today?"
+    # The Vibe Check:
+    # Mood: [A creative, 2-3 word mood, e.g. "Spiraling Chic"]
+    # Anthem: [Song Name] - [Artist]
+    # Lucky: [3 Random Numbers] | ⚡ Task: [A short, funny specific command, e.g. "Stop reorganizing your sock drawer."]
 
     RULES:
-    - Length: Under 220 characters.
-    - NO hashtags (I will add them).
-    - English language.
+    - Language: English.
+    - Tone: Gen Z, chaotic, relatable.
+    - Do NOT wrap output in quotes.
     """
 
     for model_name in MODELS:
