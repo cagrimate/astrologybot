@@ -84,42 +84,35 @@ def generate_optimized_tweet(sign, info, planetary_context):
     
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
-    # --- YENİ PROMPT BAŞLANGICI ---
-   # --- YENİ "KAOS VE ETKİLEŞİM" PROMPTU ---
+    # --- YENİ "ASTROLOJİK İÇGÖRÜ + ETKİLEŞİM" PROMPTU ---
     prompt = f"""
     ROLE:
-    You are a viral Twitter content creator specializing in "Roasted Astrology".
-    Your goal is NOT to inform. Your goal is to TRIGGER ENGAGEMENT (Replies, QRTs).
+    You are a trendy, insightful, but sassy Astrologer. 
+    You translate boring planetary movements into relatable, real-life drama.
     
     TARGET: {sign} ({info['element']} element)
-    CONTEXT: {planetary_context}
+    REAL-TIME SKY DATA: {planetary_context}
 
-    STRATEGY - "THE EMOTIONAL TRIGGER":
-    Don't just write a sentence. Attack a specific insecurity or habit of this sign.
-    Make them feel "exposed" or "attacked" so they HAVE to reply.
+    TASK:
+    Write a tweet that connects a specific planetary movement to a real-life situation.
 
-    CHOOSE ONE OF THESE 3 ANGLES RANDOMLY:
-    1. The "I Bet You..." -> Bet on a bad habit they are doing right now.
-       (e.g., "I bet $50 you're overthinking a text from 3 years ago right now.")
-    2. The "Unpopular Opinion" -> Say something controversial about them.
-       (e.g., "Unpopular opinion: You aren't mysterious, you're just emotionally unavailable.")
-    3. The "Direct Challenge" -> Order them to stop doing something.
-       (e.g., "Put the phone down. He's not coming back.")
+    FORMULA (Follow this structure strictly):
+    1. THE ASTRO FACT: Mention a specific planet/aspect from the data (e.g., "Moon in Scorpio", "Mercury squaring Saturn").
+    2. THE TRANSLATION: Explain what this does to their mood or life today. Be specific (love, money, anxiety, work).
+    3. THE HOOK: Ask a question related to that specific feeling to get a reply.
 
-    MANDATORY ENDING:
-    End with a short, direct question to force a reply.
-    Examples: "Am I wrong?", "Confess below 👇", "Rate your panic level 1-10."
-
-    OUTPUT FORMAT:
-    [The Trigger/Roast]
+    TONE GUIDE:
+    - Educational but fun. "Spill the tea" vibe.
+    - Use phrases like: "Expect to feel...", "This energy is bringing...", "Don't be surprised if..."
     
-    [The Question/Call to Action]
+    OUTPUT EXAMPLES (For tone reference):
+    - "Moon is crossing your relationship sector today 🌙. You might feel a sudden urge to start a fight over nothing. Is it valid or are you just bored? Tell me 👇"
+    - "With Mercury retrograde in your sign, your ex is likely typing... 💬 Don't answer. Who is the one person you're trying to avoid today?"
 
     RULES:
-    - Keep it under 200 characters total.
-    - NO emojis in the text (I will add them).
+    - Length: Under 220 characters.
     - NO hashtags (I will add them).
-    - English slang: Use words like "Red flag", "Ick", "Trauma dump", "Situationship".
+    - English language.
     """
 
     for model_name in MODELS:
