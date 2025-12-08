@@ -84,35 +84,36 @@ def generate_optimized_tweet(sign, info, planetary_context):
     
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
-   # --- X PREMIUM FULL MOD: YORUM + ETKİLEŞİM + TAM LİSTE ---
+    # --- OPTİMİZE EDİLMİŞ PROMPT (350 Karakter Hedefi) ---
     prompt = f"""
     ROLE:
-    You are a viral, sassy, and insightful Astrologer. 
-    You have NO character limit. Write as much as needed to be funny and engaging.
-
+    You are a punchy, savage Astrologer. You write short, scannable tweets.
+    
     TARGET: {sign} ({info['element']})
     SKY DATA: {planetary_context}
 
+    CONSTRAINT:
+    Total output length MUST be around 350 characters. Keep it tight.
+
     INSTRUCTIONS:
 
-    PART 1: THE ASTROLOGICAL ROAST & INSIGHT (The Body)
-    - Start with the specific planetary aspect (e.g., "Mars in Leo is making you...").
-    - Explain how it affects their real life (love, career, drama).
-    - Be witty, slightly mean (roast), but accurate.
-    - END this part with a direct, engaging question to force a reply (e.g., "Who are you stalking? Confess.").
+    1. THE BODY (Max 250 chars):
+    - One sharp sentence about the planetary vibe (Roast or Insight).
+    - One short, direct question to force a reply.
+    - Example: "Moon in Pisces has you crying over a commercial. Pull it together. Why are you so fragile today? 👇"
 
-    PART 2: THE VIBE CHECK (The Footer)
-    - You MUST use exactly this format below. Do not change the headers.
-    
+    2. THE FOOTER (Standard Format):
+    - Keep entries short to save space.
+    - Format:
     # The Vibe Check:
-    # Mood: [A creative, 2-3 word mood, e.g. "Spiraling Chic"]
-    # Anthem: [Song Name] - [Artist]
-    # Lucky: [3 Random Numbers] | ⚡ Task: [A short, funny specific command, e.g. "Stop reorganizing your sock drawer."]
+    # Mood: [1-2 words]
+    # Anthem: [Song] - [Artist]
+    # Lucky: [Numbers] | ⚡ Task: [Very short command]
 
     RULES:
-    - Language: English.
-    - Tone: Gen Z, chaotic, relatable.
-    - Do NOT wrap output in quotes.
+    - No fluff. No long paragraphs.
+    - English language.
+    - No quotes.
     """
 
     for model_name in MODELS:
@@ -145,7 +146,7 @@ for sign, info in ZODIAC_INFO.items():
         extra_tags = random.sample(HASHTAG_POOL, 3)
         tags_str = f"{main_tag} {' '.join(extra_tags)}"
         
-        # Tweet metnini birleştir (Tip artık content'in içinde geliyor)
+        # Tweet metnini birleştir
         tweet_text = f"{info['symbol']} {sign.upper()} {info['date']}\n\n{content}\n\n{tags_str}"
         
         # Karakter Kontrolü
@@ -161,7 +162,7 @@ for sign, info in ZODIAC_INFO.items():
                 time.sleep(wait_time)
                 
             except tweepy.errors.Forbidden:
-                print("⚠️ Hata: Tweet 280 karakteri geçti (X Premium yoksa kısaltmak gerekebilir).")
+                print("⚠️ Hata: X API limiti veya içerik sorunu.")
             except Exception as e:
                 print(f"⚠️ Post failed: {e}")
     else:
