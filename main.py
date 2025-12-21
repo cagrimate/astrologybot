@@ -54,7 +54,6 @@ def calculate_daily_transits():
     except Exception:
         return "Planetary Data Unavailable."
 
-# Burç Bilgileri
 ZODIAC_INFO = {
     "Aries": {"symbol": "♈", "date": "(Mar 21 - Apr 19)", "element": "Fire"},
     "Taurus": {"symbol": "♉", "date": "(Apr 20 - May 20)", "element": "Earth"},
@@ -70,50 +69,34 @@ ZODIAC_INFO = {
     "Pisces": {"symbol": "♓", "date": "(Feb 19 - Mar 20)", "element": "Water"}
 }
 
-# --- İNGİLİZCE HASHTAG HAVUZU ---
 HASHTAG_POOL = [
     "#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", 
-    "#ZodiacSigns", "#AstrologyPosts", "#Manifestation", "#Spirituality", 
-    "#Energy", "#MoonPhase", "#Universe", "#Vibe", "#Healing", 
-    "#Tarot", "#Mindfulness", "#SelfCare"
+    "#Manifestation", "#Spirituality", "#Energy", "#Vibe", "#Cosmic"
 ]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    today = datetime.date.today()
-    date_str = today.strftime("%B %d")
-    
+    # Model isimlerine dokunulmadı
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
-    # --- OPTİMİZE EDİLMİŞ PROMPT (350 Karakter Hedefi) ---
+    # Prompt ilgi çekici, kısa ve sert (savage) olacak şekilde güncellendi
+    # 280 Karakter sınırı için içerik 180 karakterle sınırlandırıldı.
     prompt = f"""
-    ROLE:
-    You are a punchy, savage Astrologer. You write short, scannable tweets.
-    
+    ROLE: 
+    You are a savage, witty, and slightly chaotic Astrologer. You don't give boring advice; you give "harsh truths" and punchy insights.
+
     TARGET: {sign} ({info['element']})
     SKY DATA: {planetary_context}
 
-    CONSTRAINT:
-    Total output length MUST be around 350 characters. Keep it tight.
-
     INSTRUCTIONS:
-
-    1. THE BODY (Max 250 chars):
-    - One sharp sentence about the planetary vibe (Roast or Insight).
-    - One short, direct question to force a reply.
-    - Example: "Moon in Pisces has you crying over a commercial. Pull it together. Why are you so fragile today? 👇"
-
-    2. THE FOOTER (Standard Format):
-    - Keep entries short to save space.
-    - Format:
-    # The Vibe Check:
-    # Mood: [1-2 words]
-    # Anthem: [Song] - [Artist]
-    # Lucky: [Numbers] | ⚡ Task: [Very short command]
-
-    RULES:
-    - No fluff. No long paragraphs.
-    - English language.
-    - No quotes.
+    - Write a high-engagement, scannable tweet.
+    - Start with a bold statement or a roast about their current energy.
+    - Include a short, weirdly specific task or a "mood check".
+    - STRIKT LIMIT: Max 180 characters for the body text. 
+    - Use no hashtags and no emojis in your response.
+    - Format: 
+      [One savage insight]
+      Mood: [1-2 words]
+      Task: [Short command]
     """
 
     for model_name in MODELS:
@@ -131,9 +114,7 @@ def generate_optimized_tweet(sign, info, planetary_context):
 # --- ANA AKIŞ ---
 print(f"\n✨ COSMIC ENGINE: AI GENERATED TIPS ({datetime.date.today()})\n")
 
-print("🔭 Scanning the sky...")
 gunluk_gezegen_konumlari = calculate_daily_transits()
-print("-" * 40)
 
 for sign, info in ZODIAC_INFO.items():
     print(f"⚡ Generating for {sign}...")
@@ -141,33 +122,35 @@ for sign, info in ZODIAC_INFO.items():
     content = generate_optimized_tweet(sign, info, gunluk_gezegen_konumlari)
     
     if content:
-        # --- HASHTAG OLUŞTURMA (İNGİLİZCE) ---
+        # Karakter sınırı (280) kontrolü
+        header = f"{info['symbol']} {sign.upper()} {info['date']}\n\n"
+        
+        # Hashtag havuzundan tasarruf için 2 tane seçiyoruz
         main_tag = f"#{sign}"
-        extra_tags = random.sample(HASHTAG_POOL, 3)
-        tags_str = f"{main_tag} {' '.join(extra_tags)}"
+        extra_tags = random.sample(HASHTAG_POOL, 2)
+        footer = f"\n\n{main_tag} {' '.join(extra_tags)}"
         
-        # Tweet metnini birleştir
-        tweet_text = f"{info['symbol']} {sign.upper()} {info['date']}\n\n{content}\n\n{tags_str}"
+        tweet_text = f"{header}{content}{footer}"
         
-        # Karakter Kontrolü
-        print(f"\n📝 TWEET ({len(tweet_text)} chars):\n{tweet_text}\n")
+        # Sert Karakter Kontrolü (Twitter 280 limit)
+        if len(tweet_text) > 280:
+            allowed_content_len = 280 - len(header) - len(footer) - 3
+            content = content[:allowed_content_len] + "..."
+            tweet_text = f"{header}{content}{footer}"
+        
+        print(f"📝 TWEET ({len(tweet_text)} chars):\n{tweet_text}\n")
         
         if client:
             try:
                 client.create_tweet(text=tweet_text)
                 print("✅ Posted.")
-                
                 wait_time = random.randint(60, 120)
                 print(f"☕ Waiting {wait_time}s...")
                 time.sleep(wait_time)
-                
-            except tweepy.errors.Forbidden:
-                print("⚠️ Hata: X API limiti veya içerik sorunu.")
             except Exception as e:
                 print(f"⚠️ Post failed: {e}")
     else:
         print(f"❌ Failed generation for {sign}.")
-    
     print("-" * 40)
 
-print("🎉 All tweets posted.")
+print("🎉 All tweets processed.")
