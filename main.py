@@ -7,6 +7,7 @@ import ephem
 import tweepy
 import google.generativeai as genai
 from dotenv import load_dotenv
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 # 1. Ayarları Yükle
 load_dotenv()
@@ -75,39 +76,56 @@ HASHTAG_POOL = [
 ]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    # Model isimlerine dokunulmadı
-    MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
+    # Güncel ve çalışan modeller
+    MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
     
-    # Prompt ilgi çekici, kısa ve sert (savage) olacak şekilde güncellendi
-    # 280 Karakter sınırı için içerik 180 karakterle sınırlandırıldı.
+    # Güvenlik ayarları: Modelin "sert" konuşurken engellenmesini önler
+    safety_settings = {
+        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+    }
+
+    # Daha akıllı ve sosyal medyaya uygun prompt
     prompt = f"""
     ROLE: 
-    You are a savage, witty, and slightly chaotic Astrologer. You don't give boring advice; you give "harsh truths" and punchy insights.
+    You are a witty, sarcastic, and slightly chaotic Cosmic Oracle. 
+    You give 'tough love' and unfiltered cosmic truths. 
+    Avoid generic advice. Be punchy and high-engagement.
 
     TARGET: {sign} ({info['element']})
-    SKY DATA: {planetary_context}
+    PLANETARY DATA: {planetary_context}
 
     INSTRUCTIONS:
-    - Write a high-engagement, scannable tweet.
-    - Start with a bold statement or a roast about their current energy.
-    - Include a short, weirdly specific task or a "mood check".
-    - STRIKT LIMIT: Max 180 characters for the body text. 
-    - Use no hashtags and no emojis in your response.
-    - Format: 
-      [One savage insight]
-      Mood: [1-2 words]
-      Task: [Short command]
+    - Write a short, viral-style tweet.
+    - Start with a direct, sarcastic observation about their current vibe.
+    - Include a weirdly specific 'mood' and a 'command'.
+    - DO NOT use emojis. DO NOT use hashtags.
+    - Body text must be UNDER 160 characters.
+    
+    FORMAT:
+    [One sharp, witty cosmic insight]
+    Mood: [1-2 words]
+    Task: [Short, weird command]
     """
 
     for model_name in MODELS:
         try:
             model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
+            # Güvenlik ayarlarıyla birlikte çağırıyoruz
+            response = model.generate_content(
+                prompt, 
+                safety_settings=safety_settings
+            )
+            
             content = (response.text or "").strip()
             if content:
-                content = content.replace('"', '')
+                # Çıktıdaki gereksiz karakterleri temizle
+                content = content.replace('"', '').replace('*', '')
                 return content
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ {model_name} denemesi başarısız: {e}")
             continue
     return None
 
