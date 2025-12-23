@@ -77,7 +77,7 @@ HASHTAG_POOL = [
 
 def generate_optimized_tweet(sign, info, planetary_context):
     # Güncel ve çalışan modeller
-    MODELS = ["gemini-1.5-flash", "gemini-1.5-pro"]
+    MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
     # Güvenlik ayarları: Modelin "sert" konuşurken engellenmesini önler
     safety_settings = {
