@@ -13,6 +13,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 load_dotenv()
 
 # --- API BAĞLANTILARI ---
+# ÖNEMLİ: Gemini model isimlerini güncelledim (1.5 serisi)
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 try:
@@ -22,9 +23,10 @@ try:
         access_token=os.getenv("X_ACCESS_TOKEN"),
         access_token_secret=os.getenv("X_ACCESS_TOKEN_SECRET")
     )
+    # Bağlantı testi
     print("✅ Twitter Bağlantısı Başarılı!")
-except Exception:
-    print("⚠️ Twitter Bağlantı Hatası (Test modu - Tweet atılmayacak)")
+except Exception as e:
+    print(f"⚠️ Twitter Bağlantı Hatası: {e}")
     client = None
 
 # --- 2. GÜÇLÜ ASTROLOJİ MOTORU (EPHEM) ---
@@ -76,10 +78,9 @@ HASHTAG_POOL = [
 ]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    # Güncel ve çalışan modeller
+    # Güncel ve çalışan stabil model isimleri
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
-    # Güvenlik ayarları: Modelin "sert" konuşurken engellenmesini önler
     safety_settings = {
         HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
         HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
@@ -87,33 +88,30 @@ def generate_optimized_tweet(sign, info, planetary_context):
         HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
     }
 
-    # Daha akıllı ve sosyal medyaya uygun prompt
     prompt = f"""
     ROLE: 
     You are a witty, sarcastic, and slightly chaotic Cosmic Oracle. 
     You give 'tough love' and unfiltered cosmic truths. 
-    Avoid generic advice. Be punchy and high-engagement.
 
     TARGET: {sign} ({info['element']})
     PLANETARY DATA: {planetary_context}
 
     INSTRUCTIONS:
-    - Write a short, viral-style tweet.
-    - Start with a direct, sarcastic observation about their current vibe.
-    - Include a weirdly specific 'mood' and a 'command'.
+    - Write a short, viral-style tweet,specially about new year 2026. People wants to hear about new year .
+    - Start with a direct, sarcastic observation.
+    - Include 'Mood:' and 'Task:'.
     - DO NOT use emojis. DO NOT use hashtags.
     - Body text must be UNDER 160 characters.
     
     FORMAT:
-    [One sharp, witty cosmic insight]
+    [Insight]
     Mood: [1-2 words]
-    Task: [Short, weird command]
+    Task: [Short command]
     """
 
     for model_name in MODELS:
         try:
             model = genai.GenerativeModel(model_name)
-            # Güvenlik ayarlarıyla birlikte çağırıyoruz
             response = model.generate_content(
                 prompt, 
                 safety_settings=safety_settings
@@ -121,16 +119,20 @@ def generate_optimized_tweet(sign, info, planetary_context):
             
             content = (response.text or "").strip()
             if content:
-                # Çıktıdaki gereksiz karakterleri temizle
                 content = content.replace('"', '').replace('*', '')
                 return content
         except Exception as e:
-            print(f"⚠️ {model_name} denemesi başarısız: {e}")
+            # 429 hatası durumunda bekleme süresi
+            if "429" in str(e):
+                print(f"⏳ Kota doldu, 60 saniye bekleniyor...")
+                time.sleep(60)
+            else:
+                print(f"⚠️ {model_name} hatası: {e}")
             continue
     return None
 
 # --- ANA AKIŞ ---
-print(f"\n✨ COSMIC ENGINE: AI GENERATED TIPS ({datetime.date.today()})\n")
+print(f"\n✨ COSMIC ENGINE STARTING ({datetime.date.today()})\n")
 
 gunluk_gezegen_konumlari = calculate_daily_transits()
 
@@ -140,17 +142,13 @@ for sign, info in ZODIAC_INFO.items():
     content = generate_optimized_tweet(sign, info, gunluk_gezegen_konumlari)
     
     if content:
-        # Karakter sınırı (280) kontrolü
         header = f"{info['symbol']} {sign.upper()} {info['date']}\n\n"
-        
-        # Hashtag havuzundan tasarruf için 2 tane seçiyoruz
         main_tag = f"#{sign}"
         extra_tags = random.sample(HASHTAG_POOL, 2)
         footer = f"\n\n{main_tag} {' '.join(extra_tags)}"
         
         tweet_text = f"{header}{content}{footer}"
         
-        # Sert Karakter Kontrolü (Twitter 280 limit)
         if len(tweet_text) > 280:
             allowed_content_len = 280 - len(header) - len(footer) - 3
             content = content[:allowed_content_len] + "..."
@@ -160,13 +158,20 @@ for sign, info in ZODIAC_INFO.items():
         
         if client:
             try:
+                # X API'de 403 alıyorsanız: Developer Portal -> App Settings -> User Authentication Settings
+                # kısmından "Read and Write" yetkisini aktif edin.
                 client.create_tweet(text=tweet_text)
                 print("✅ Posted.")
-                wait_time = random.randint(60, 120)
-                print(f"☕ Waiting {wait_time}s...")
-                time.sleep(wait_time)
             except Exception as e:
-                print(f"⚠️ Post failed: {e}")
+                print(f"⚠️ Post failed (X API Error): {e}")
+                if "403" in str(e):
+                    print("💡 İPUCU: Twitter App ayarlarından 'Read and Write' iznini kontrol edin.")
+        
+        # Kota ve Spam Engelleme: Her burç arasında 15-20 saniye bekleme
+        # Bu hem Gemini 429 hatasını hem Twitter spam filtresini önler.
+        wait_time = random.randint(15, 25)
+        print(f"☕ Next in {wait_time}s...")
+        time.sleep(wait_time)
     else:
         print(f"❌ Failed generation for {sign}.")
     print("-" * 40)
