@@ -76,7 +76,7 @@ HASHTAG_POOL = ["#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", "#Spir
 
 def generate_optimized_tweet(sign, info, planetary_context):
     # Stabil model ismi
-    MODEL_ID = "gemini-1.5-flash"
+     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
     prompt = f"""
     ROLE: Witty, sarcastic Cosmic Oracle.
