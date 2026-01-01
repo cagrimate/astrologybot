@@ -1,4 +1,4 @@
 tweepy
-google-generativeai
+google-genai
 ephem
 python-dotenv
