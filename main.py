@@ -5,16 +5,17 @@ import random
 import math
 import ephem
 import tweepy
-import google.generativeai as genai
+# Yeni kütüphane: google-genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 # 1. Ayarları Yükle
 load_dotenv()
 
 # --- API BAĞLANTILARI ---
-# Model isimlerini en stabil versiyon olan 1.5-flash ve 1.5-pro olarak güncelledik
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Yeni nesil GenAI istemcisi
+gen_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 try:
     client = tweepy.Client(
@@ -28,7 +29,7 @@ except Exception as e:
     print(f"⚠️ Twitter Bağlantı Hatası: {e}")
     client = None
 
-# --- 2. GÜÇLÜ ASTROLOJİ MOTORU (EPHEM) ---
+# --- 2. ASTROLOJİ MOTORU (EPHEM) ---
 def get_zodiac_sign(lon_degrees):
     zodiacs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
                "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
@@ -74,57 +75,48 @@ ZODIAC_INFO = {
 HASHTAG_POOL = ["#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", "#Spirituality", "#Energy", "#Vibe", "#Cosmic"]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    # En güvenilir model isimleri
-    MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
+    # Stabil model ismi
+    MODEL_ID = "gemini-1.5-flash"
     
-    safety_settings = {
-        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-    }
-
     prompt = f"""
-    ROLE: 
-    You are a witty, sarcastic, and slightly chaotic Cosmic Oracle. 
-    You give 'tough love' and unfiltered cosmic truths. 
-
+    ROLE: Witty, sarcastic Cosmic Oracle.
     TARGET: {sign} ({info['element']})
     PLANETARY DATA: {planetary_context}
-
     INSTRUCTIONS:
     - Write a short, viral-style tweet about the new year 2026.
     - Start with a direct, sarcastic observation.
     - Include 'Mood:' and 'Task:'.
-    - DO NOT use emojis. DO NOT use hashtags.
-    - Body text must be UNDER 160 characters.
-    
-    FORMAT:
-    [Insight]
-    Mood: [1-2 words]
-    Task: [Short command]
+    - DO NOT use emojis or hashtags.
+    - Body text UNDER 160 characters.
     """
 
-    for model_name in MODELS:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt, safety_settings=safety_settings)
-            content = (response.text or "").strip()
-            if content:
-                return content.replace('"', '').replace('*', '')
-        except Exception as e:
-            if "429" in str(e):
-                print(f"⏳ Gemini Kotası doldu, 75 saniye zorunlu mola...")
-                time.sleep(75)
-            else:
-                print(f"⚠️ {model_name} hatası: {e}")
-            continue
+    try:
+        response = gen_client.models.generate_content(
+            model=MODEL_ID,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                safety_settings=[
+                    types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                ]
+            )
+        )
+        content = response.text.strip()
+        if content:
+            return content.replace('"', '').replace('*', '')
+    except Exception as e:
+        if "429" in str(e):
+            print("⏳ Gemini Kotası doldu, mola veriliyor...")
+            time.sleep(75)
+        else:
+            print(f"⚠️ Gemini hatası: {e}")
     return None
 
 # --- ANA AKIŞ ---
 print(f"\n✨ COSMIC ENGINE STARTING ({datetime.date.today()})\n")
 gunluk_gezegen_konumlari = calculate_daily_transits()
-
 zodiac_list = list(ZODIAC_INFO.items())
 
 for i, (sign, info) in enumerate(zodiac_list):
@@ -134,33 +126,27 @@ for i, (sign, info) in enumerate(zodiac_list):
     
     if content:
         header = f"{info['symbol']} {sign.upper()} {info['date']}\n\n"
-        main_tag = f"#{sign}"
-        extra_tags = random.sample(HASHTAG_POOL, 2)
-        footer = f"\n\n{main_tag} {' '.join(extra_tags)}"
-        
+        footer = f"\n\n#{sign} {' '.join(random.sample(HASHTAG_POOL, 2))}"
         tweet_text = f"{header}{content}{footer}"
         
+        # Twitter limit kontrolü
         if len(tweet_text) > 280:
-            allowed_content_len = 280 - len(header) - len(footer) - 3
-            content = content[:allowed_content_len] + "..."
-            tweet_text = f"{header}{content}{footer}"
+            tweet_text = tweet_text[:277] + "..."
         
-        print(f"📝 TWEET ({len(tweet_text)} chars):\n{tweet_text}")
+        print(f"📝 TWEET:\n{tweet_text}")
         
         if client:
             try:
                 client.create_tweet(text=tweet_text)
                 print("✅ Başarıyla paylaşıldı.")
             except Exception as e:
-                print(f"⚠️ Twitter Paylaşım Hatası: {e}")
+                print(f"⚠️ Twitter Hatası: {e}")
         
-        # Son burç değilse 2 dakika bekle
         if sign != "Pisces":
-            wait_seconds = 120 # 2 dakika sabit bekleme
-            print(f"\n☕ Kota koruması aktif: Bir sonraki burç ({zodiac_list[i+1][0]}) için 2 dakika bekleniyor...")
-            time.sleep(wait_seconds)
+            print(f"\n☕ 120 saniye bekleniyor (Kota Koruması)...")
+            time.sleep(120)
             print("-" * 40)
     else:
-        print(f"❌ {sign} için içerik üretilemedi.")
+        print(f"❌ {sign} içeriği üretilemedi.")
 
-print("\n🎉 Tüm burçlar başarıyla işlendi ve paylaşıldı.")
+print("\n🎉 Tüm burçlar tamamlandı.")
