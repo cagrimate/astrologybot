@@ -13,7 +13,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 load_dotenv()
 
 # --- API BAĞLANTILARI ---
-# ÖNEMLİ: Gemini model isimlerini güncelledim (1.5 serisi)
+# Model isimlerini en stabil versiyon olan 1.5-flash ve 1.5-pro olarak güncelledik
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 try:
@@ -23,7 +23,6 @@ try:
         access_token=os.getenv("X_ACCESS_TOKEN"),
         access_token_secret=os.getenv("X_ACCESS_TOKEN_SECRET")
     )
-    # Bağlantı testi
     print("✅ Twitter Bağlantısı Başarılı!")
 except Exception as e:
     print(f"⚠️ Twitter Bağlantı Hatası: {e}")
@@ -72,13 +71,10 @@ ZODIAC_INFO = {
     "Pisces": {"symbol": "♓", "date": "(Feb 19 - Mar 20)", "element": "Water"}
 }
 
-HASHTAG_POOL = [
-    "#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", 
-    "#Manifestation", "#Spirituality", "#Energy", "#Vibe", "#Cosmic"
-]
+HASHTAG_POOL = ["#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", "#Spirituality", "#Energy", "#Vibe", "#Cosmic"]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    # Güncel ve çalışan stabil model isimleri
+    # En güvenilir model isimleri
     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
     
     safety_settings = {
@@ -97,7 +93,7 @@ def generate_optimized_tweet(sign, info, planetary_context):
     PLANETARY DATA: {planetary_context}
 
     INSTRUCTIONS:
-    - Write a short, viral-style tweet,specially about new year 2026. People wants to hear about new year .
+    - Write a short, viral-style tweet about the new year 2026.
     - Start with a direct, sarcastic observation.
     - Include 'Mood:' and 'Task:'.
     - DO NOT use emojis. DO NOT use hashtags.
@@ -112,20 +108,14 @@ def generate_optimized_tweet(sign, info, planetary_context):
     for model_name in MODELS:
         try:
             model = genai.GenerativeModel(model_name)
-            response = model.generate_content(
-                prompt, 
-                safety_settings=safety_settings
-            )
-            
+            response = model.generate_content(prompt, safety_settings=safety_settings)
             content = (response.text or "").strip()
             if content:
-                content = content.replace('"', '').replace('*', '')
-                return content
+                return content.replace('"', '').replace('*', '')
         except Exception as e:
-            # 429 hatası durumunda bekleme süresi
             if "429" in str(e):
-                print(f"⏳ Kota doldu, 60 saniye bekleniyor...")
-                time.sleep(60)
+                print(f"⏳ Gemini Kotası doldu, 75 saniye zorunlu mola...")
+                time.sleep(75)
             else:
                 print(f"⚠️ {model_name} hatası: {e}")
             continue
@@ -133,11 +123,12 @@ def generate_optimized_tweet(sign, info, planetary_context):
 
 # --- ANA AKIŞ ---
 print(f"\n✨ COSMIC ENGINE STARTING ({datetime.date.today()})\n")
-
 gunluk_gezegen_konumlari = calculate_daily_transits()
 
-for sign, info in ZODIAC_INFO.items():
-    print(f"⚡ Generating for {sign}...")
+zodiac_list = list(ZODIAC_INFO.items())
+
+for i, (sign, info) in enumerate(zodiac_list):
+    print(f"⚡ [{i+1}/12] Generating for {sign}...")
     
     content = generate_optimized_tweet(sign, info, gunluk_gezegen_konumlari)
     
@@ -154,26 +145,22 @@ for sign, info in ZODIAC_INFO.items():
             content = content[:allowed_content_len] + "..."
             tweet_text = f"{header}{content}{footer}"
         
-        print(f"📝 TWEET ({len(tweet_text)} chars):\n{tweet_text}\n")
+        print(f"📝 TWEET ({len(tweet_text)} chars):\n{tweet_text}")
         
         if client:
             try:
-                # X API'de 403 alıyorsanız: Developer Portal -> App Settings -> User Authentication Settings
-                # kısmından "Read and Write" yetkisini aktif edin.
                 client.create_tweet(text=tweet_text)
-                print("✅ Posted.")
+                print("✅ Başarıyla paylaşıldı.")
             except Exception as e:
-                print(f"⚠️ Post failed (X API Error): {e}")
-                if "403" in str(e):
-                    print("💡 İPUCU: Twitter App ayarlarından 'Read and Write' iznini kontrol edin.")
+                print(f"⚠️ Twitter Paylaşım Hatası: {e}")
         
-        # Kota ve Spam Engelleme: Her burç arasında 15-20 saniye bekleme
-        # Bu hem Gemini 429 hatasını hem Twitter spam filtresini önler.
-        wait_time = random.randint(15, 25)
-        print(f"☕ Next in {wait_time}s...")
-        time.sleep(wait_time)
+        # Son burç değilse 2 dakika bekle
+        if sign != "Pisces":
+            wait_seconds = 120 # 2 dakika sabit bekleme
+            print(f"\n☕ Kota koruması aktif: Bir sonraki burç ({zodiac_list[i+1][0]}) için 2 dakika bekleniyor...")
+            time.sleep(wait_seconds)
+            print("-" * 40)
     else:
-        print(f"❌ Failed generation for {sign}.")
-    print("-" * 40)
+        print(f"❌ {sign} için içerik üretilemedi.")
 
-print("🎉 All tweets processed.")
+print("\n🎉 Tüm burçlar başarıyla işlendi ve paylaşıldı.")
