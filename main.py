@@ -5,7 +5,6 @@ import random
 import math
 import ephem
 import tweepy
-# Yeni kütüphane: google-genai
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -14,7 +13,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- API BAĞLANTILARI ---
-# Yeni nesil GenAI istemcisi
 gen_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 try:
@@ -29,7 +27,7 @@ except Exception as e:
     print(f"⚠️ Twitter Bağlantı Hatası: {e}")
     client = None
 
-# --- 2. ASTROLOJİ MOTORU (EPHEM) ---
+# --- 2. ASTROLOJİ MOTORU ---
 def get_zodiac_sign(lon_degrees):
     zodiacs = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
                "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"]
@@ -75,8 +73,8 @@ ZODIAC_INFO = {
 HASHTAG_POOL = ["#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", "#Spirituality", "#Energy", "#Vibe", "#Cosmic"]
 
 def generate_optimized_tweet(sign, info, planetary_context):
-    # Stabil model ismi
-     MODELS = ["gemini-2.5-flash", "gemini-2.5-pro"]
+    # Sırasıyla denenecek modeller (Önce Pro, sonra Flash)
+    MODELS_TO_TRY = ["gemini-2.5-pro", "gemini-2.5-flash"]
     
     prompt = f"""
     ROLE: Witty, sarcastic Cosmic Oracle.
@@ -90,28 +88,28 @@ def generate_optimized_tweet(sign, info, planetary_context):
     - Body text UNDER 160 characters.
     """
 
-    try:
-        response = gen_client.models.generate_content(
-            model=MODEL_ID,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                safety_settings=[
-                    types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-                    types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-                    types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-                    types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-                ]
+    for model_id in MODELS_TO_TRY:
+        try:
+            response = gen_client.models.generate_content(
+                model=model_id,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    safety_settings=[
+                        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                    ]
+                )
             )
-        )
-        content = response.text.strip()
-        if content:
-            return content.replace('"', '').replace('*', '')
-    except Exception as e:
-        if "429" in str(e):
-            print("⏳ Gemini Kotası doldu, mola veriliyor...")
-            time.sleep(75)
-        else:
-            print(f"⚠️ Gemini hatası: {e}")
+            content = response.text.strip()
+            if content:
+                print(f"✅ Content generated using: {model_id}")
+                return content.replace('"', '').replace('*', '')
+        except Exception as e:
+            print(f"⚠️ {model_id} denemesi başarısız: {e}")
+            continue # Bir sonraki modele geç
+            
     return None
 
 # --- ANA AKIŞ ---
@@ -129,7 +127,6 @@ for i, (sign, info) in enumerate(zodiac_list):
         footer = f"\n\n#{sign} {' '.join(random.sample(HASHTAG_POOL, 2))}"
         tweet_text = f"{header}{content}{footer}"
         
-        # Twitter limit kontrolü
         if len(tweet_text) > 280:
             tweet_text = tweet_text[:277] + "..."
         
@@ -147,6 +144,6 @@ for i, (sign, info) in enumerate(zodiac_list):
             time.sleep(120)
             print("-" * 40)
     else:
-        print(f"❌ {sign} içeriği üretilemedi.")
+        print(f"❌ {sign} içeriği hiçbir modelle üretilemedi.")
 
 print("\n🎉 Tüm burçlar tamamlandı.")
