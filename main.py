@@ -74,18 +74,24 @@ HASHTAG_POOL = ["#Astrology", "#Horoscope", "#Zodiac", "#DailyHoroscope", "#Spir
 
 def generate_optimized_tweet(sign, info, planetary_context):
     # Sırasıyla denenecek modeller (Önce Pro, sonra Flash)
-    MODELS_TO_TRY = ["gemini-2.5-pro", "gemini-2.5-flash"]
+    MODELS_TO_TRY = ["gemini-2.0-flash","gemini-2.5-flash", "gemini-2.5-pro"]
     
     prompt = f"""
-    ROLE: Witty, sarcastic Cosmic Oracle.
+    ROLE: Witty, sarcastic Cosmic Oracle with a cynical yet wise perspective.
     TARGET: {sign} ({info['element']})
     PLANETARY DATA: {planetary_context}
     INSTRUCTIONS:
-    - Write a short, viral-style tweet about the new year 2026.
-    - Start with a direct, sarcastic observation.
-    - Include 'Mood:' and 'Task:'.
-    - DO NOT use emojis or hashtags.
-    - Body text UNDER 160 characters.
+    - Write a punchy, viral-style tweet .
+    - Opening: Start with a direct, sarcastic observation about the target's current cosmic struggle.
+    - Advice: Ensure the sarcasm hides a logical, actionable truth.
+    - Format: 
+      [Sarcastic Observation]
+      Mood: [2-3 words]
+      Task: [Short, blunt instruction]
+    - CONSTRAINTS: 
+      * NO emojis, NO hashtags.
+      * Total body text MUST be under 160 characters to ensure it fits Twitter's UI perfectly.
+      * Use a dry, "told-you-so" tone.
     """
 
     for model_id in MODELS_TO_TRY:
