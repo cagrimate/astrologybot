@@ -81,16 +81,18 @@ def generate_optimized_tweet(sign, info, planetary_context):
     TARGET: {sign} ({info['element']})
     PLANETARY DATA: {planetary_context}
     INSTRUCTIONS:
-    - Write a punchy, viral-style tweet .
+    - Write a punchy, viral-style tweet.
     - Opening: Start with a direct, sarcastic observation about the target's current cosmic struggle.
     - Advice: Ensure the sarcasm hides a logical, actionable truth.
+    - Interaction: End with a 3-4 word cynical command (e.g., Seal this by commenting).
     - Format: 
       [Sarcastic Observation]
       Mood: [2-3 words]
       Task: [Short, blunt instruction]
+      [Engagement Command]
     - CONSTRAINTS: 
       * NO emojis, NO hashtags.
-      * Total body text MUST be under 160 characters to ensure it fits Twitter's UI perfectly.
+      * Total body text MUST be under 160 characters. This is a hard limit.
       * Use a dry, "told-you-so" tone.
     """
 
