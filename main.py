@@ -89,7 +89,7 @@ def generate_optimized_tweet(sign, info, planetary_context):
       [Sarcastic Observation]
       Mood: [2-3 words]
       Task: [Short, blunt instruction]
-      [Engagement Command]
+      [Interaction]
     - CONSTRAINTS: 
       * NO emojis, NO hashtags.
       * Total body text MUST be under 160 characters. This is a hard limit.
